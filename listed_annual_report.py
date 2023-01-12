@@ -17,7 +17,8 @@ import time
 # 获取所有A股上市公司名录
 json_url = 'http://www.cninfo.com.cn/new/data/szse_stock.json'
 df = pd.read_json(json_url, encoding='utf-8')
-df = df[df["category"]=='A股']
+df = df['stockList'].apply(pd.Series)
+df = df[df['category']=='A股']
 list_comp = df['zwjc'].tolist()
 
 
@@ -29,7 +30,7 @@ Url = 'http://www.cninfo.com.cn/new/index'
 
 class Crawler(object):
     # 初始化浏览器配置
-    def __init__(self, url, bank_name, start_date, end_date):
+    def __init__(self, url, name, start_date, end_date):
         option = ChromeOptions()
         # 反屏蔽
         option.add_experimental_option('excludeSwitches', ['enable-automation'])
@@ -37,7 +38,7 @@ class Crawler(object):
         option.binary_location = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
         # 修改下载地址
         option.add_experimental_option("prefs",
-                                       {"download.default_directory": "F:\\Annual_Report"})
+                                       {"download.default_directory": "E:\\Annual_Report"})
         self.browser = webdriver.Chrome(options=option,executable_path='C:\\Program Files\\Google\\chromedriver.exe')
         self.browser.execute_cdp_cmd('Page.addScriptToEvaluateOnNewDocument',
                                      {'source': 'Object.defineProperty(navigator, "webdriver", {get: () => undefined})'})
@@ -47,7 +48,7 @@ class Crawler(object):
         # 目标网页：url
         self.url = url
         # 目标银行名称
-        self.bank_name = bank_name
+        self.name = name
         # 起止日期
         self.start_date, self.end_date = start_date, end_date
 
@@ -56,7 +57,7 @@ class Crawler(object):
         # 填写“银行名称”
         element = self.browser.find_element(By.XPATH,'//*[@id="searchTab"]/div[2]/div[2]/div/div[1]/div/div[1]/input')
         ActionChains(self.browser).double_click(element).perform()
-        element.send_keys(self.bank_name)
+        element.send_keys(self.name)
         ActionChains(self.browser).move_by_offset(0, 0).click().perform() 
         time.sleep(0.5)
         # 修改“开始日期”
@@ -142,9 +143,16 @@ class Crawler(object):
 
 
 # 一次下载不完，分多次下载
-notyet = list_comp.index('华联控股') + 1
-length = len(list_comp)
+last_down = ''
+
+if last_down != '':
+    notyet = list_comp.index(last_down) + 1
+else:
+    notyet = 0
+
+length = len(list_comp) - 1
 list_comp = list_comp[notyet:length]
+
 for listing in list_comp:
     print('开始下载：', listing)
     Juchaozixun = Crawler(Url, listing, '2000-01-01', '2022-12-31')  # 后两个参数分别对应查询起止日期，可自行修改
