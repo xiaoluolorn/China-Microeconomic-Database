@@ -1,24 +1,27 @@
 # -*- coding: utf-8 -*-
+# @Time    : 2023/01/12
+# @Author  : Chaoyang Luo
 
-# 导入目标公司列表 —— 中国 36家 上市银行
-bank_list = ['工商银行', '农业银行', '中国银行', '建设银行', '交通银行', '邮储银行',
-             '招商银行', '兴业银行', '中信银行', '平安银行', '光大银行', '民生银行',
-             '浙商银行', '浦发银行', '华夏银行', '北京银行', '宁波银行', '杭州银行',
-             '上海银行', '郑州银行', '西安银行', '青岛银行', '长沙银行', '江苏银行',
-             '南京银行', '苏州银行', '苏农银行', '无锡银行', '江阴银行', '常熟银行',
-             '紫金银行', '成都银行', '贵阳银行', '张家港行', '渝农商行', '青农商行']
 
-# # 或者，以文件形式导入：
-# import pandas as pd
-# bank_list = pd.read_csv('company_list.csv', encoding='utf-8', header=None)
-# bank_list = bank_list.iloc[:, 0].tolist()
-
+# 导入必要的包
+import pandas as pd
+import json
 from selenium import webdriver
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver import ChromeOptions
-import time
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.chrome.service import Service
+import time
+
+# 获取所有A股上市公司名录
+json_url = 'http://www.cninfo.com.cn/new/data/szse_stock.json'
+df = pd.read_json(json_url, encoding='utf-8')
+df = df[df["category"]=='A股']
+list_comp = df['zwjc'].tolist()
+
+
+path = Service(r'C:\Program Files\Google\chromedriver.exe')  # chromedriver.exe 文件路径
 
 # 目标网页：巨潮资讯网
 Url = 'http://www.cninfo.com.cn/new/index'
@@ -31,10 +34,11 @@ class Crawler(object):
         # 反屏蔽
         option.add_experimental_option('excludeSwitches', ['enable-automation'])
         option.add_experimental_option('useAutomationExtension', False)
+        option.binary_location = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
         # 修改下载地址
         option.add_experimental_option("prefs",
-                                       {"download.default_directory": "D:\\"})
-        self.browser = webdriver.Chrome(options=option)
+                                       {"download.default_directory": "F:\\Annual_Report"})
+        self.browser = webdriver.Chrome(options=option,executable_path='C:\\Program Files\\Google\\chromedriver.exe')
         self.browser.execute_cdp_cmd('Page.addScriptToEvaluateOnNewDocument',
                                      {'source': 'Object.defineProperty(navigator, "webdriver", {get: () => undefined})'})
         # 隐式等待，直到网页加载完毕，最长等待时间为20s
@@ -53,26 +57,26 @@ class Crawler(object):
         element = self.browser.find_element(By.XPATH,'//*[@id="searchTab"]/div[2]/div[2]/div/div[1]/div/div[1]/input')
         ActionChains(self.browser).double_click(element).perform()
         element.send_keys(self.bank_name)
-        ActionChains(self.browser).move_by_offset(0, 0).click().perform()  # 点击空白处
-        time.sleep(1)
+        ActionChains(self.browser).move_by_offset(0, 0).click().perform() 
+        time.sleep(0.5)
         # 修改“开始日期”
         element = self.browser.find_element(By.XPATH,'//div[@class="ct-line"]/div[1]/input[@placeholder="开始日期"]')
         ActionChains(self.browser).double_click(element).perform()
         element.clear()
         element.send_keys(self.start_date)
-        ActionChains(self.browser).move_by_offset(0, 0).click().perform()  # 点击空白处
+        ActionChains(self.browser).move_by_offset(0, 0).click().perform() 
         # 修改“结束日期”
         element = self.browser.find_element(By.XPATH,'//div[@class="ct-line"]/div[1]/input[@placeholder="结束日期"]')
         ActionChains(self.browser).double_click(element).perform()
         element.clear()
         element.send_keys(self.end_date)
-        ActionChains(self.browser).move_by_offset(0, 0).click().perform()  # 点击空白处
+        ActionChains(self.browser).move_by_offset(0, 0).click().perform() 
         # 修改“分类”
         self.browser.find_element(By.XPATH,'//*[@id="searchTab"]/div[2]/div[2]/div/div[2]/span/button').click()
         self.browser.find_element(By.CSS_SELECTOR,'span[title="年报"]').click()
-        # self.browser.find_element_by_css_selector('span[title="三季报"]').click()
-        # self.browser.find_element_by_css_selector('span[title="半年报"]').click()
-        # self.browser.find_element_by_css_selector('span[title="一季报"]').click()
+        # self.browser.find_element(By.CSS_SELECTOR,'span[title="三季报"]').click()
+        # self.browser.find_element(By.CSS_SELECTOR,'span[title="半年报"]').click()
+        # self.browser.find_element(By.CSS_SELECTOR,'span[title="一季报"]').click()
         self.browser.find_element(By.XPATH,'//div[@class="ft"]/button').click()
         # 提交“查询”
         self.browser.find_element(By.XPATH,'//*[@id="searchTab"]/div[2]/div[5]/button').click()
@@ -86,14 +90,26 @@ class Crawler(object):
         for node_num in range(1, max_node_num + 1):
             subpath = '//tbody/tr[{}]/td[3]/div/span/a'.format(node_num)  # 获取子链接
             sub_link = self.browser.find_element(By.XPATH,subpath)  # 点击子链接
-            self.browser.execute_script("arguments[0].click();", sub_link)
-            self.browser.switch_to.window(self.browser.window_handles[-1])  # 切换到最新打开的窗口（文件下载页面）
-            try:
-                self.browser.find_element(By.XPATH,
-                    '//*[@id="noticeDetail"]/div/div[1]/div[3]/div[1]/button').click()  # 点击“下载”，文件保存到默认下载路径
-            except:
-                print('该文件为年报摘要，不可下载')
-            time.sleep(0.5)
+            if sub_link.text.find('摘要')>0: # 年报摘要不下载
+                continue
+            elif sub_link.text.find('H股')>0: # H股年报不下载
+                continue
+            elif sub_link.text.find('补充')>0: # 补充年报不下载
+                continue
+            elif sub_link.text.find('取消')>0: # 已取消年报不下载
+                continue
+            elif sub_link.text.find('英文')>0: # 英文年报不下载
+                continue
+            else:
+                self.browser.execute_script("arguments[0].click();", sub_link)
+                self.browser.switch_to.window(self.browser.window_handles[-1])  # 切换到最新打开的窗口（文件下载页面）
+                try:
+                    self.browser.find_element(By.XPATH,
+                   '//*[@id="noticeDetail"]/div/div[1]/div[3]/div[1]/button').click()  # 点击“下载”，文件保存到默认下载路径
+                except:
+                    print('该文件不可下载')
+
+            time.sleep(1)  # 根据网速快慢调整，网速慢调大参数
             self.browser.close()  # 关闭当前窗口
             self.browser.switch_to.window(self.browser.window_handles[0])  # 返回起始窗口
             print('当前页面已下载到第', node_num, '条')
@@ -114,18 +130,22 @@ class Crawler(object):
             try:
                 a = self.browser.find_element(By.XPATH,'//button[@class="btn-next" and @disabled="disabled"]')
                 print('已下载到最后一页')
-                time.sleep(3)
+                time.sleep(8)   # 根据网速调整，网速慢需要将参数调大
                 break
             except:
                 next_page_button = self.browser.find_element(By.XPATH,'//button[@class="btn-next"]')
-                next_page_button.click()  # 翻页
+                next_page_button.click()  
                 page += 1
                 time.sleep(1)
         self.browser.close()
-        time.sleep(3)
+        time.sleep(1)
 
 
-for bn in bank_list:
-    print('开始下载：', bn)
-    Juchaozixun = Crawler(Url, bn, '2000-01-01', '2021-12-31')  # 后两个参数分别对应查询起止日期，可自行修改
+# 一次下载不完，分多次下载
+notyet = list_comp.index('华联控股') + 1
+length = len(list_comp)
+list_comp = list_comp[notyet:length]
+for listing in list_comp:
+    print('开始下载：', listing)
+    Juchaozixun = Crawler(Url, listing, '2000-01-01', '2022-12-31')  # 后两个参数分别对应查询起止日期，可自行修改
     Juchaozixun.search_and_download()
