@@ -39,7 +39,7 @@ class Crawler(object):
         # 修改下载地址
         option.add_experimental_option("prefs",
                                        {"download.default_directory": "E:\\Annual_Report"})
-        self.browser = webdriver.Chrome(options=option,executable_path='C:\\Program Files\\Google\\chromedriver.exe')
+        self.browser = webdriver.Chrome(options=option,executable_path='C:\\Program Files\\Google\\chromedriver.exe') # chromedriver.exe 文件路径
         self.browser.execute_cdp_cmd('Page.addScriptToEvaluateOnNewDocument',
                                      {'source': 'Object.defineProperty(navigator, "webdriver", {get: () => undefined})'})
         # 隐式等待，直到网页加载完毕，最长等待时间为20s
@@ -131,7 +131,7 @@ class Crawler(object):
             try:
                 a = self.browser.find_element(By.XPATH,'//button[@class="btn-next" and @disabled="disabled"]')
                 print('已下载到最后一页')
-                time.sleep(8)   # 根据网速调整，网速慢需要将参数调大
+                time.sleep(5)   # 根据网速调整，网速慢需要将参数调大
                 break
             except:
                 next_page_button = self.browser.find_element(By.XPATH,'//button[@class="btn-next"]')
@@ -143,7 +143,7 @@ class Crawler(object):
 
 
 # 一次下载不完，分多次下载
-last_down = ''
+last_down = ''  #填入最一个已经下载好的上市公司名，如：平安银行
 
 if last_down != '':
     notyet = list_comp.index(last_down) + 1
