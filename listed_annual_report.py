@@ -5,7 +5,6 @@
 
 # 导入必要的包
 import pandas as pd
-import json
 from selenium import webdriver
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver import ChromeOptions
@@ -33,7 +32,7 @@ class Crawler(object):
     def __init__(self, url, name, start_date, end_date):
         option = ChromeOptions()
         # 反屏蔽
-        option.add_experimental_option('excludeSwitches', ['enable-automation'])
+        option.add_experimental_option('excludeSwitches', ['enable-automation', 'enable-logging'])
         option.add_experimental_option('useAutomationExtension', False)
         option.binary_location = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
         option.add_argument('--ignore-certificate-errors')
@@ -133,7 +132,7 @@ class Crawler(object):
             try:
                 a = self.browser.find_element(By.XPATH,'//button[@class="btn-next" and @disabled="disabled"]')
                 print('已下载到最后一页')
-                time.sleep(5)   # 根据网速调整，网速慢需要将参数调大
+                time.sleep(3)   # 根据网速调整，网速慢需要将参数调大
                 break
             except:
                 next_page_button = self.browser.find_element(By.XPATH,'//button[@class="btn-next"]')
