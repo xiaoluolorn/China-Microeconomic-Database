@@ -54,7 +54,7 @@ class Crawler(object):
 
     # 提交查询命令
     def search(self):
-        # 填写“银行名称”
+        # 填写“企业名称”
         element = self.browser.find_element(By.XPATH,'//*[@id="searchTab"]/div[2]/div[2]/div/div[1]/div/div[1]/input')
         ActionChains(self.browser).double_click(element).perform()
         element.send_keys(self.name)
@@ -124,7 +124,7 @@ class Crawler(object):
         self.search()
         page = 1
         while True:
-            time.sleep(1)
+            time.sleep(0.5)
             # 翻页循环
             print('开始下载第', page, '页')
             self.download_pdf()  # 下载当前页面所有pdf文件
