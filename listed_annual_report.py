@@ -36,6 +36,7 @@ class Crawler(object):
         option.add_experimental_option('excludeSwitches', ['enable-automation'])
         option.add_experimental_option('useAutomationExtension', False)
         option.binary_location = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
+        option.add_argument('--ignore-certificate-errors') 
         # 修改下载地址
         option.add_experimental_option("prefs",
                                        {"download.default_directory": "E:\\Annual_Report"})
