@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# @Time    : 2023/01/15
+# @Time    : 2023/01/12
 # @Author  : Chaoyang Luo
 
 
@@ -144,14 +144,10 @@ class Crawler(object):
             time.sleep(1)
             print('开始下载第', page, '页')
             self.download_pdf()  # 下载当前页面所有pdf文件 //*[@id="main"]/div[2]/div[1]/div[1]/div[3]/div/button[2]
-            a = self.browser.find_element(By.XPATH,'//*[@id="main"]/div[2]/div[1]/div[1]/div[3]/div/button[2]').is_enabled()
-            if a == 1:
-                next_page_button = self.browser.find_element(By.XPATH,'//*[@id="main"]/div[2]/div[1]/div[1]/div[3]/div/button[2]')
-                try:
-                    next_page_button.click()
-                    page += 1
-                except:
-                    break
+            next_page_button = self.browser.find_element(By.XPATH,'//*[@id="main"]/div[2]/div[1]/div[1]/div[3]/div/button[2]')
+            if next_page_button.is_enabled() == 1:
+                next_page_button.click()
+                page += 1
             else:
                 print('已下载到最后一页')
                 break
@@ -161,7 +157,7 @@ class Crawler(object):
 
 
 # 一次下载不完，分多次下载
-last_down = ''
+last_down = '600127'
 
 if last_down != '':
     notyet = list_comp.index(last_down) + 1
