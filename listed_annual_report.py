@@ -161,7 +161,7 @@ class Crawler(object):
 
 
 # 一次下载不完，分多次下载
-last_down = '600096'
+last_down = ''
 
 if last_down != '':
     notyet = list_comp.index(last_down) + 1
